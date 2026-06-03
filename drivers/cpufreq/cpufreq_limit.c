@@ -489,6 +489,7 @@ static int cpufreq_limit_notifier_policy(struct notifier_block *nb,
 	 * little and big has similar power and performance case
 	 * e.g. MSM8996 silver and gold
 	 */
+#ifdef CONFIG_SCHED_HMP
 	if (hmp_param.little_divider == 1) {
 		if (is_big(policy->cpu)) {
 			/* sched_boost scenario */
@@ -498,8 +499,14 @@ static int cpufreq_limit_notifier_policy(struct notifier_block *nb,
 				cpufreq_limit_hmp_boost(0);
 		}
 	} else {
+		/* Dacă HMP este activ, dar little_divider nu este 1, ajustăm frecvența normal */
 		cpufreq_limit_adjust_freq(policy, &min, &max);
 	}
+#else
+	/* EAS Fallback: Dacă kernelul nu folosește HMP (cazul tău pe SM8150), 
+	 * ignorăm logica de mai sus și rulăm DIRECT ajustarea normală de frecvență. */
+	cpufreq_limit_adjust_freq(policy, &min, &max);
+#endif
 
 	pr_debug("%s: limiting cpu%d cpufreq to %lu-%lu\n", __func__,
 			policy->cpu, min, max);
