@@ -791,7 +791,7 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 #ifndef CONFIG_SND_SOC_WCD_MBHC_SLOW_DET
 correct_plug_type:
 #endif
-	/* REPARARE: Verificăm slow_insertion doar dacă suportul este activat în kernel */
+	/* REPARARE 1: Condiția inițială pentru HEADSET */
 #ifdef CONFIG_SND_SOC_WCD_MBHC_SLOW_DET
 	if (!mbhc->slow_insertion &&
 		mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET) {
@@ -804,7 +804,13 @@ correct_plug_type:
 	}
 
 	timeout = jiffies + msecs_to_jiffies(HS_DETECT_PLUG_TIME_MS);
-	while (!time_after(jiffies, timeout)&& mbhc->slow_insertion) {
+
+	/* REPARARE 2: Bucla de timeout pentru Slow Insertion */
+#ifdef CONFIG_SND_SOC_WCD_MBHC_SLOW_DET
+	while (!time_after(jiffies, timeout) && mbhc->slow_insertion) {
+#else
+	while (false) { /* Dacă detecția lentă este oprită, compilatorul va elimina complet această buclă dead-code */
+#endif
 		if (mbhc->hs_detect_work_stop) {
 			pr_debug("%s: stop requested: %d\n", __func__,
 					mbhc->hs_detect_work_stop);
@@ -820,6 +826,7 @@ correct_plug_type:
 			wcd_micbias_disable(mbhc);
 			goto exit;
 		}
+	}
 
 		msleep(180);
 		/*
