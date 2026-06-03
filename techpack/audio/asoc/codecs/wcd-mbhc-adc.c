@@ -791,8 +791,13 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 #ifndef CONFIG_SND_SOC_WCD_MBHC_SLOW_DET
 correct_plug_type:
 #endif
+	/* REPARARE: Verificăm slow_insertion doar dacă suportul este activat în kernel */
+#ifdef CONFIG_SND_SOC_WCD_MBHC_SLOW_DET
 	if (!mbhc->slow_insertion &&
 		mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET) {
+#else
+	if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET) {
+#endif
 		pr_debug("%s: plug_type:0x%x already reported\n",
 			 __func__, mbhc->current_plug);
 		goto report;
